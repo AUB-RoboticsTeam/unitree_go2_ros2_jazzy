@@ -15,7 +15,7 @@ Robot description · `ros2_control` · Gazebo worlds · RViz visualization · ke
 
 <sub>Gazebo Harmonic simulation and live Unitree L1 point cloud visualization in RViz.</sub>
 
-[Quick start](#quick-start) · [Control](#control-the-robot) · [Topics](#main-ros-2-topics) · [Troubleshooting](#troubleshooting)
+[Project changes](#project-changes-and-attribution) · [Quick start](#quick-start) · [Control](#control-the-robot) · [Topics](#main-ros-2-topics) · [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -28,13 +28,37 @@ bridges, visualization, example worlds, and operator input into one workspace.
 ### Highlights
 
 - Go2 URDF/Xacro model with `gz_ros2_control`
-- Gazebo Harmonic worlds for flat ground, elevation, city, and TI-building tests
-- Simulated IMU, RGB camera, Unitree L1 LiDAR, and four foot-contact sensors
+- Gazebo Harmonic worlds for flat ground, elevation, city, and custom indoor tests
+- Simulated IMU, RGB camera, Unitree L1 LiDAR, and added contact sensing on all four feet
 - Live robot model, camera, odometry, and point cloud visualization in RViz
 - Dynamic `odom -> base_link` transform published from Gazebo odometry
 - Keyboard, standard `sensor_msgs/Joy`, combined, and Unitree BLE remote input
 - Bundled Unitree low-level messages and per-joint ROS 2 controller
 - Isolated Gazebo transport partition on every launch to avoid stale-session collisions
+
+## Project changes and attribution
+
+This ROS 2 Jazzy repository builds on work from the Unitree open-source
+community, while replacing and extending several parts of the original stack:
+
+- The starting Go2 simulation from
+  [anujjain-dev/unitree-go2-ros2](https://github.com/anujjain-dev/unitree-go2-ros2)
+  used the CHAMP controller. CHAMP was removed from this repository.
+- The active locomotion/controller stack was migrated from
+  [Unitree Robotics' `unitree_ros`](https://github.com/unitreerobotics/unitree_ros),
+  with [Atharva-05/unitree_ros2_sim](https://github.com/Atharva-05/unitree_ros2_sim)
+  used as an additional ROS 2 simulation and migration reference.
+- **Hadi added contact sensors for all four feet**, exposed as ROS 2 contact
+  topics for simulation and control development.
+- **The AUB Robotics Team created the custom indoor simulation world** shown in
+  the screenshots, including walls, furniture, ramps, steps, and obstacles.
+- **Joystick support was added**, including a bundled BLE bridge that lets the
+  physical Unitree Go2 remote connect directly over Bluetooth and publish
+  standard `sensor_msgs/Joy` messages.
+
+These changes provide a controller path based on Unitree's stack without the
+CHAMP dependency, while targeting Ubuntu 24.04, ROS 2 Jazzy, and Gazebo
+Harmonic.
 
 ## Screenshots
 
@@ -271,8 +295,10 @@ rosdep check --from-paths src --ignore-src --rosdistro jazzy
 
 ## Acknowledgements
 
-- [Unitree Robotics — `unitree_ros`](https://github.com/unitreerobotics/unitree_ros)
-- [anujjain-dev — `unitree-go2-ros2`](https://github.com/anujjain-dev/unitree-go2-ros2)
+- [Unitree Robotics — `unitree_ros`](https://github.com/unitreerobotics/unitree_ros): source of the migrated Unitree locomotion/controller stack
+- [Atharva-05 — `unitree_ros2_sim`](https://github.com/Atharva-05/unitree_ros2_sim): ROS 2 simulation and controller-migration reference
+- [anujjain-dev — `unitree-go2-ros2`](https://github.com/anujjain-dev/unitree-go2-ros2): original CHAMP-based Go2 simulation foundation
+- **Hadi and the AUB Robotics Team**: ROS 2 Jazzy/Gazebo Harmonic migration, CHAMP removal, four-foot contact sensing, custom world, and joystick/BLE integration
 
 ## License
 
