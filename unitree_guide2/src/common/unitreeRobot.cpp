@@ -176,7 +176,7 @@ Go2Robot::Go2Robot(){
 
     _robVelLimitX << -1.2, 1.2;
     _robVelLimitY << -0.3, 0.3;
-    _robVelLimitYaw << -3.0, 3.0;
+    _robVelLimitYaw << -4.5, 4.5;
 
     // Go2 total mass (trunk + 4 legs, from unitree_go2_description URDF link masses) is
     // ~15.1kg, versus Go1's 12kg -- reusing Go1Robot's numbers here previously starved
