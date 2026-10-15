@@ -2,7 +2,7 @@
 <robot>
   <!-- Gazebo Sim plugins -->
   <gazebo>
-    <plugin filename="gz-sim-pose-publisher-system" name="gz::sim::systems::PosePublisher">
+    <plugin filename="ignition-gazebo-pose-publisher-system" name="ignition::gazebo::systems::PosePublisher">
       <publish_link_pose>true</publish_link_pose>
       <publish_sensor_pose>true</publish_sensor_pose>
       <publish_collision_pose>false</publish_collision_pose>
@@ -16,7 +16,7 @@
 
   <!-- Robot-wide physics properties -->
   <!-- <gazebo>
-    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
+    <plugin filename="ignition-gazebo-physics-system" name="ignition::gazebo::systems::Physics">
       <engine>
         <filename>gz-physics-bullet-plugin</filename>
       </engine>
@@ -25,7 +25,7 @@
 
   <!-- ROS2 Control plugin -->
   <gazebo>
-    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+    <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>$(find unitree_go2_sim)/config/ros_control/ros_control.yaml</parameters>
       <robot_param_node>robot_state_publisher</robot_param_node>
       <hold_joints>false</hold_joints>
@@ -34,7 +34,7 @@
 
   <!-- Odometry plugin -->
   <gazebo>
-    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+    <plugin filename="ignition-gazebo-odometry-publisher-system" name="ignition::gazebo::systems::OdometryPublisher">
       <!-- Publish the moving odom -> base_link transform.  The standard launch
            bridges this Gazebo Pose_V topic to ROS /tf for RViz and tf2. -->
       <dimensions>3</dimensions>
@@ -96,7 +96,7 @@
           </z>
         </linear_acceleration>
       </imu>
-      <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
+      <plugin filename="ignition-gazebo-imu-system" name="ignition::gazebo::systems::Imu">
         <initial_orientation_as_reference>false</initial_orientation_as_reference>
       </plugin>
     </sensor>

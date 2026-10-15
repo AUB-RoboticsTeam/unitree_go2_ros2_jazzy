@@ -182,7 +182,7 @@
                 <update_rate>1000</update_rate>
                 <contact>
                     <collision>${name}_lower_leg_link_fixed_joint_lump__${name}_foot_link_collision_1</collision>
-                    <!-- Gazebo Sim 8's Contact system reads topic here. -->
+                    <!-- Contact system (Fortress and Harmonic) reads topic here. -->
                     <topic>/feet/${contact_name}/contacts</topic>
                 </contact>
             </sensor>
@@ -195,21 +195,27 @@
 
             <joint name="${name}_hip_joint">
                 <command_interface name="effort"/>
-                <state_interface name="position"/>
+                <state_interface name="position">
+                    <param name="initial_value">${initial_hip}</param>
+                </state_interface>
                 <state_interface name="velocity"/>
                 <state_interface name="effort"/>
             </joint>
 
             <joint name="${name}_upper_leg_joint">
                 <command_interface name="effort"/>
-                <state_interface name="position"/>
+                <state_interface name="position">
+                    <param name="initial_value">${initial_thigh}</param>
+                </state_interface>
                 <state_interface name="velocity"/>
                 <state_interface name="effort"/>
             </joint>
 
             <joint name="${name}_lower_leg_joint">
                 <command_interface name="effort"/>
-                <state_interface name="position"/>
+                <state_interface name="position">
+                    <param name="initial_value">${initial_calf}</param>
+                </state_interface>
                 <state_interface name="velocity"/>
                 <state_interface name="effort"/>
             </joint>

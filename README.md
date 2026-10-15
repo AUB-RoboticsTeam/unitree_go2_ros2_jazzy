@@ -1,12 +1,12 @@
 <div align="center">
 
-# Unitree Go2 — ROS 2 Jazzy Simulation
+# Unitree Go2 — ROS 2 Humble Simulation
 
-**A complete Gazebo Harmonic simulation and control stack for the Unitree Go2.**
+**A complete Gazebo Fortress simulation and control stack for the Unitree Go2 (Ubuntu 22.04 / ROS 2 Humble port).**
 
-[![ROS 2](https://img.shields.io/badge/ROS%202-Jazzy-22314E?logo=ros)](https://docs.ros.org/en/jazzy/)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?logo=ubuntu&logoColor=white)](https://releases.ubuntu.com/noble/)
-[![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic-F58113?logo=gazebo&logoColor=white)](https://gazebosim.org/docs/harmonic/)
+[![ROS 2](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros)](https://docs.ros.org/en/humble/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)](https://releases.ubuntu.com/jammy/)
+[![Gazebo](https://img.shields.io/badge/Gazebo-Fortress-F58113?logo=gazebo&logoColor=white)](https://gazebosim.org/docs/fortress/)
 [![Platform](https://img.shields.io/badge/platform-amd64-lightgrey)](#requirements)
 
 Robot description · `ros2_control` · Gazebo worlds · RViz visualization · keyboard, joystick, and BLE control
@@ -21,14 +21,16 @@ Robot description · `ros2_control` · Gazebo worlds · RViz visualization · ke
 
 ## Overview
 
-This repository provides ROS 2 Jazzy packages for simulating and controlling a
-Unitree Go2 in Gazebo Harmonic. It brings the robot model, controllers, sensor
+This `humble` branch provides ROS 2 Humble packages for simulating and
+controlling a Unitree Go2 in Gazebo Fortress on Ubuntu 22.04. It is a port of
+the ROS 2 Jazzy / Gazebo Harmonic version on the `main` branch; launch commands
+and controls are the same on both. It brings the robot model, controllers, sensor
 bridges, visualization, example worlds, and operator input into one workspace.
 
 ### Highlights
 
 - Go2 URDF/Xacro model with `gz_ros2_control`
-- Gazebo Harmonic worlds for flat ground, elevation, city, and custom indoor tests
+- Gazebo worlds for flat ground, elevation, city, and custom indoor tests
 - Simulated IMU, RGB camera, Unitree L1 LiDAR, and added contact sensing on all four feet
 - Live robot model, camera, odometry, and point cloud visualization in RViz
 - Dynamic `odom -> base_link` transform published from Gazebo odometry
@@ -38,7 +40,7 @@ bridges, visualization, example worlds, and operator input into one workspace.
 
 ## Project changes and attribution
 
-This ROS 2 Jazzy repository builds on work from the Unitree open-source
+This repository builds on work from the Unitree open-source
 community, while replacing and extending several parts of the original stack:
 
 - The starting Go2 simulation from
@@ -57,8 +59,10 @@ community, while replacing and extending several parts of the original stack:
   standard `sensor_msgs/Joy` messages.
 
 These changes provide a controller path based on Unitree's stack without the
-CHAMP dependency, while targeting Ubuntu 24.04, ROS 2 Jazzy, and Gazebo
-Harmonic.
+CHAMP dependency, originally targeting Ubuntu 24.04, ROS 2 Jazzy, and Gazebo
+Harmonic (`main` branch). This `humble` branch ports it to Ubuntu 22.04, ROS 2
+Humble, and Gazebo Fortress; see [Requirements](#requirements) for the
+differences.
 
 ## Screenshots
 
@@ -89,10 +93,29 @@ Harmonic.
 
 ## Requirements
 
-- Ubuntu 24.04 (amd64)
-- ROS 2 Jazzy Desktop
-- Gazebo Harmonic packages supplied with ROS 2 Jazzy
+- Ubuntu 22.04 (amd64)
+- ROS 2 Humble Desktop
+- Gazebo Fortress (`ign gazebo` 6) with the Humble `ros_gz` and `gz_ros2_control`
+  packages (`ros-humble-ros-gz`, `ros-humble-gz-ros2-control`)
 - Bluetooth adapter only when using the Unitree Go2 BLE remote
+
+### Differences from the original Ubuntu 24.04 / Jazzy / Harmonic version
+
+On Humble, the binary `ros_gz` and `gz_ros2_control` packages are built for
+Gazebo Fortress, not Harmonic, so this port targets Fortress:
+
+- World and URDF system plugins use the Fortress names
+  (`ignition-gazebo-*-system`, `ignition::gazebo::systems::*`) and
+  `libgz_ros2_control-system.so`; world files are SDF 1.9.
+- `default.sdf` uses Fortress's default physics engine (DART) instead of
+  `bullet-featherstone`, which Fortress does not provide.
+- The launch file always starts Fortress (`gz_version:=6`), even when Gazebo
+  Harmonic is also installed, and sets `IGN_PARTITION` alongside `GZ_PARTITION`.
+- Each leg joint has a `ros2_control` `initial_value`, so the Go2 spawns in its
+  lying-down pose (hip 0, thigh 1.36, calf -2.65). Fortress does not move a
+  joint that spawns outside its limits back into range, and the calf range
+  excludes 0. Without this, the first stand command makes the calf chatter
+  against its stop and flips the robot.
 
 > [!NOTE]
 > The bundled Unitree joint-control binary is currently built for amd64.
@@ -102,16 +125,16 @@ Harmonic.
 ### 1. Clone and install dependencies
 
 ```bash
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 
 mkdir -p ~/go2_ws/src
 cd ~/go2_ws/src
-git clone https://github.com/AUB-RoboticsTeam/unitree_go2_ros2_jazzy.git
+git clone -b humble https://github.com/AUB-RoboticsTeam/unitree_go2_ros2_jazzy.git
 
 cd ~/go2_ws
 sudo rosdep init 2>/dev/null || true
 rosdep update
-rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
+rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 ```
 
 `rosdep` installs the declared ROS and system dependencies, including BlueZ,
@@ -121,7 +144,7 @@ LCM, Eigen, ROS-Gazebo, and ROS 2 Control.
 
 ```bash
 cd ~/go2_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
@@ -197,11 +220,27 @@ ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=keyboard
 
 ### Joystick only
 
-Use a joystick that publishes `sensor_msgs/Joy` on `/joy`:
+**Unitree Go2 remote (Bluetooth).** By default the launch also starts the BLE
+bridge, which connects to the remote and publishes `/joy`. Pass your remote's
+Bluetooth address (find it with `bluetoothctl`, then `scan on`):
 
 ```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick
+ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick \
+  unitree_address:=XX:XX:XX:XX:XX:XX
 ```
+
+**Standard USB/Bluetooth gamepad.** Start the ROS `joy` driver and turn off the
+BLE bridge:
+
+```bash
+ros2 run joy joy_node    # separate terminal
+ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick use_unitree_ble:=false
+```
+
+Press **A** to stand and **Start** to trot, then drive with the sticks. Button
+indices default to an Xbox-style layout (`A` = 0, `Start` = 7). For other
+gamepads, check the indices with `ros2 topic echo /joy` and override them, e.g.
+`ros2 run unitree_guide2 junior_ctrl --ros-args -p input_mode:=joystick -p joy.button_a:=1 -p joy.button_start:=9`.
 
 Use D-pad Up to increase speed and D-pad Down to decrease it. The Unitree Go2
 remote uses buttons `12` and `14`; standard joystick D-pad axis `7` is also
@@ -249,6 +288,11 @@ robot.
 
 ## Troubleshooting
 
+> [!IMPORTANT]
+> Run `clean_sim.sh` (below) between launches. A leftover Gazebo from an
+> earlier run keeps publishing `/imu/data` and `/odom` on the same ROS topics,
+> and `junior_ctrl` then mixes the two robots' data and can fall while trotting.
+
 ### A fresh launch fails or the robot does not spawn
 
 Clean up processes left by an interrupted Gazebo session, then launch again:
@@ -278,7 +322,7 @@ ros2 topic echo /unitree_lidar/points --once
 
 ```bash
 cd ~/go2_ws
-rosdep check --from-paths src --ignore-src --rosdistro jazzy
+rosdep check --from-paths src --ignore-src --rosdistro humble
 ```
 
 ## Acknowledgements
@@ -287,6 +331,7 @@ rosdep check --from-paths src --ignore-src --rosdistro jazzy
 - [Atharva-05 — `unitree_ros2_sim`](https://github.com/Atharva-05/unitree_ros2_sim): ROS 2 simulation and controller-migration reference
 - [anujjain-dev — `unitree-go2-ros2`](https://github.com/anujjain-dev/unitree-go2-ros2): original CHAMP-based Go2 simulation foundation
 - **Hadi and the AUB Robotics Team**: ROS 2 Jazzy/Gazebo Harmonic migration, CHAMP removal, four-foot contact sensing, custom world, and joystick/BLE integration
+- ROS 2 Humble / Gazebo Fortress port for Ubuntu 22.04 (`humble` branch)
 
 ## License
 

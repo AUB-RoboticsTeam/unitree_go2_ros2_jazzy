@@ -65,6 +65,15 @@
     <xacro:property name="calf_velocity_max" value="20.06"/>
     <xacro:property name="calf_torque_max" value="35.55"/>
 
+    <!-- Initial joint pose: the Go2 lying-down pose. The calf range excludes 0,
+         and Gazebo Fortress does not pull a joint that spawns outside its
+         limits back into range, so starting at 0 makes the calf chatter
+         against its stop and flip the robot on the first stand. Spawning
+         folded also lets the passive robot settle flat on its belly. -->
+    <xacro:property name="initial_hip" value="0.0"/>
+    <xacro:property name="initial_thigh" value="1.36"/>
+    <xacro:property name="initial_calf" value="-2.65"/>
+
     <!-- dynamics inertial value -->
     <!-- trunk -->
     <xacro:property name="trunk_mass" value="6.921"/>

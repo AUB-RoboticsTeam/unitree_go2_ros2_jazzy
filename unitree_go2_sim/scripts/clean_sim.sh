@@ -27,7 +27,9 @@ set -u
 
 PATTERNS=(
     "gz sim"
+    "ign gazebo"
     "ruby.*gz"
+    "ruby.*ign"
     "ros2 launch unitree_go2_sim"
     "junior_ctrl"
     "lib/controller_manager/controller_manager"

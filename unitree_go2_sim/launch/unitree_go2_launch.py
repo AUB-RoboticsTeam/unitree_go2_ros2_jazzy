@@ -33,14 +33,24 @@ def generate_launch_description():
     # spawner that hangs waiting on a service served by the dead run. Giving each
     # launch its own partition makes stale processes from earlier runs invisible
     # to this one, so leftovers can no longer corrupt a fresh launch.
-    set_gz_partition = SetEnvironmentVariable(
-        "GZ_PARTITION", f"unitree_go2_sim_{os.getpid()}_{int(time.time())}"
-    )
+    # On ROS 2 Humble the simulator is Gazebo Fortress (ign gazebo), whose
+    # transport reads IGN_PARTITION; set both so either generation is isolated.
+    partition = f"unitree_go2_sim_{os.getpid()}_{int(time.time())}"
+    set_gz_partition = SetEnvironmentVariable("GZ_PARTITION", partition)
+    set_ign_partition = SetEnvironmentVariable("IGN_PARTITION", partition)
 
     unitree_go2_sim = launch_ros.substitutions.FindPackageShare(
         package="unitree_go2_sim").find("unitree_go2_sim")
     unitree_go2_description = launch_ros.substitutions.FindPackageShare(
         package="unitree_go2_description").find("unitree_go2_description")
+
+    # Let Fortress resolve model:// and package-relative mesh URIs.
+    resource_path = os.pathsep.join(
+        [os.path.dirname(unitree_go2_description),
+         os.path.join(unitree_go2_description, "worlds"),
+         os.environ.get("IGN_GAZEBO_RESOURCE_PATH", "")]
+    )
+    set_ign_resource_path = SetEnvironmentVariable("IGN_GAZEBO_RESOURCE_PATH", resource_path)
 
     ros_control_config = os.path.join(
         unitree_go2_sim, "config/ros_control/ros_control.yaml"
@@ -124,7 +134,9 @@ def generate_launch_description():
             # made the fixed startup timeouts elsewhere in this launch (spawn,
             # controller loading) more likely to race and fail under load.
             # "-s" runs the server only, matching what gui:=false is meant to do.
-            PythonExpression(["'' if '", LaunchConfiguration('gui'), "' == 'true' else ' -s'"])]
+            PythonExpression(["'' if '", LaunchConfiguration('gui'), "' == 'true' else ' -s'"])],
+            # Humble's ros_gz / gz_ros2_control binaries are built for Fortress.
+            'gz_version': '6',
         }.items(),
     )
 
@@ -231,6 +243,8 @@ def generate_launch_description():
     return LaunchDescription(
         [
             set_gz_partition,
+            set_ign_partition,
+            set_ign_resource_path,
 
             declare_use_sim_time,
             declare_rviz,
