@@ -25,6 +25,9 @@ private:
     void changeValue();
 
     pthread_t _tid;
+    int _inputFd = -1;
+    bool _threadStarted = false;
+    bool _termiosConfigured = false;
     float sensitivityLeft = 0.05;
     float sensitivityRight = 0.05;
     struct termios _oldSettings, _newSettings;

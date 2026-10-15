@@ -2,24 +2,69 @@
  Copyright (c) 2020-2023, Unitree Robotics.Co.Ltd. All rights reserved.
 ***********************************************************************/
 #include "interface/KeyBoard.h"
+#include <cerrno>
+#include <cstring>
 #include <iostream>
 
 KeyBoard::KeyBoard(){
     userCmd = UserCommand::NONE;
     userValue.setZero();
 
-    tcgetattr( fileno( stdin ), &_oldSettings );
+    // ROS 2 launch connects a node's stdin to a pipe. Open the controlling
+    // terminal explicitly so keyboard control works both with `ros2 run` and
+    // `ros2 launch`.
+    _inputFd = open("/dev/tty", O_RDWR | O_CLOEXEC);
+    if(_inputFd < 0 && isatty(STDIN_FILENO)){
+        _inputFd = dup(STDIN_FILENO);
+    }
+    if(_inputFd < 0){
+        std::cerr << "Keyboard input unavailable: no controlling terminal ("
+                  << std::strerror(errno) << ")" << std::endl;
+        return;
+    }
+
+    if(tcgetattr(_inputFd, &_oldSettings) != 0){
+        std::cerr << "Keyboard input unavailable: tcgetattr failed ("
+                  << std::strerror(errno) << ")" << std::endl;
+        close(_inputFd);
+        _inputFd = -1;
+        return;
+    }
     _newSettings = _oldSettings;
     _newSettings.c_lflag &= (~ICANON & ~ECHO);
-    tcsetattr( fileno( stdin ), TCSANOW, &_newSettings );
+    if(tcsetattr(_inputFd, TCSANOW, &_newSettings) != 0){
+        std::cerr << "Keyboard input unavailable: tcsetattr failed ("
+                  << std::strerror(errno) << ")" << std::endl;
+        close(_inputFd);
+        _inputFd = -1;
+        return;
+    }
+    _termiosConfigured = true;
 
-    pthread_create(&_tid, NULL, runKeyBoard, (void*)this);
+    const int threadError = pthread_create(&_tid, NULL, runKeyBoard, (void*)this);
+    if(threadError != 0){
+        std::cerr << "Keyboard input unavailable: pthread_create failed ("
+                  << std::strerror(threadError) << ")" << std::endl;
+        tcsetattr(_inputFd, TCSANOW, &_oldSettings);
+        _termiosConfigured = false;
+        close(_inputFd);
+        _inputFd = -1;
+        return;
+    }
+    _threadStarted = true;
 }
 
 KeyBoard::~KeyBoard(){
-    pthread_cancel(_tid);
-    pthread_join(_tid, NULL);
-    tcsetattr( fileno( stdin ), TCSANOW, &_oldSettings );
+    if(_threadStarted){
+        pthread_cancel(_tid);
+        pthread_join(_tid, NULL);
+    }
+    if(_termiosConfigured){
+        tcsetattr(_inputFd, TCSANOW, &_oldSettings);
+    }
+    if(_inputFd >= 0){
+        close(_inputFd);
+    }
 }
 
 UserCommand KeyBoard::checkCmd(){
@@ -94,16 +139,20 @@ void* KeyBoard::runKeyBoard(void *arg){
 void* KeyBoard::run(void *arg){
     while(1){
         FD_ZERO(&set);
-        FD_SET( fileno( stdin ), &set );
+        FD_SET(_inputFd, &set);
 
-        res = select( fileno( stdin )+1, &set, NULL, NULL, NULL);
+        res = select(_inputFd + 1, &set, NULL, NULL, NULL);
 
         if(res > 0){
-            ret = read( fileno( stdin ), &_c, 1 );
-            userCmd = checkCmd();
-            if(userCmd == UserCommand::NONE)
-                changeValue();
-            _c = '\0';
+            ret = read(_inputFd, &_c, 1);
+            if(ret == 1){
+                userCmd = checkCmd();
+                if(userCmd == UserCommand::NONE)
+                    changeValue();
+                _c = '\0';
+            }
+        }else if(res < 0 && errno != EINTR){
+            break;
         }
         usleep(1000);
     }
