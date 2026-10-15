@@ -24,6 +24,13 @@ Ros2CmdPanel::Ros2CmdPanel(rclcpp::Node::SharedPtr node) : _node(node){
     _scaleLy = _node->declare_parameter<double>("joy.scale_ly", 1.0);
     _scaleRx = _node->declare_parameter<double>("joy.scale_rx", 1.0);
     _scaleRy = _node->declare_parameter<double>("joy.scale_ry", 1.0);
+    _joystickSpeedScale = _node->declare_parameter<double>("speed.initial_scale", 0.5);
+    _speedStep = _node->declare_parameter<double>("speed.step", 0.1);
+    _minimumSpeedScale = _node->declare_parameter<double>("speed.minimum_scale", 0.1);
+    _maximumSpeedScale = _node->declare_parameter<double>("speed.maximum_scale", 1.0);
+    _joystickSpeedScale = std::max(
+        _minimumSpeedScale, std::min(_joystickSpeedScale, _maximumSpeedScale));
+    _axisSpeed = _node->declare_parameter<int>("joy.axis_speed", 7);
     _buttonA = _node->declare_parameter<int>("joy.button_a", 0);
     _buttonB = _node->declare_parameter<int>("joy.button_b", 1);
     _buttonX = _node->declare_parameter<int>("joy.button_x", 2);
@@ -31,6 +38,8 @@ Ros2CmdPanel::Ros2CmdPanel(rclcpp::Node::SharedPtr node) : _node(node){
     _buttonL1 = _node->declare_parameter<int>("joy.button_l1", 4);
     _buttonL2 = _node->declare_parameter<int>("joy.button_l2", 6);
     _buttonStart = _node->declare_parameter<int>("joy.button_start", 7);
+    _buttonSpeedUp = _node->declare_parameter<int>("joy.button_speed_up", 12);
+    _buttonSpeedDown = _node->declare_parameter<int>("joy.button_speed_down", 14);
     _requireL2 = _node->declare_parameter<bool>("joy.require_l2", false);
 
     if(_inputMode != "keyboard" && _inputMode != "joystick" && _inputMode != "both"){
@@ -119,6 +128,19 @@ void Ros2CmdPanel::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg){
     nextValue.ry = readAxis(msg->axes, _axisRy, _scaleRy);
     nextValue.L2 = readButton(msg->buttons, _buttonL2) ? 1.0f : 0.0f;
 
+    const float dpadVertical = readAxis(msg->axes, _axisSpeed, 1.0);
+    const bool speedUp = readButton(msg->buttons, _buttonSpeedUp) || dpadVertical > 0.5f;
+    const bool speedDown = readButton(msg->buttons, _buttonSpeedDown) || dpadVertical < -0.5f;
+    if(speedUp && !_speedUpPressed){
+        adjustJoystickSpeed(_speedStep);
+    }
+    if(speedDown && !_speedDownPressed){
+        adjustJoystickSpeed(-_speedStep);
+    }
+    _speedUpPressed = speedUp;
+    _speedDownPressed = speedDown;
+    nextValue.speedScale = static_cast<float>(_joystickSpeedScale);
+
     const bool l1 = readButton(msg->buttons, _buttonL1);
     const bool l2 = readButton(msg->buttons, _buttonL2);
     const bool a = readButton(msg->buttons, _buttonA);
@@ -190,7 +212,16 @@ bool Ros2CmdPanel::readButton(const std::vector<int32_t>& buttons, int index) co
 
 bool Ros2CmdPanel::valuesDiffer(const UserValue& lhs, const UserValue& rhs) const{
     return lhs.lx != rhs.lx || lhs.ly != rhs.ly || lhs.rx != rhs.rx ||
-           lhs.ry != rhs.ry || lhs.L2 != rhs.L2;
+           lhs.ry != rhs.ry || lhs.L2 != rhs.L2 ||
+           lhs.speedScale != rhs.speedScale;
+}
+
+void Ros2CmdPanel::adjustJoystickSpeed(double delta){
+    _joystickSpeedScale = std::max(
+        _minimumSpeedScale,
+        std::min(_joystickSpeedScale + delta, _maximumSpeedScale));
+    RCLCPP_INFO(
+        _node->get_logger(), "Speed scale: %.0f%%", _joystickSpeedScale * 100.0);
 }
 
 #endif  // COMPILE_WITH_ROS2_MB

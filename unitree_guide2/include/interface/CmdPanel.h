@@ -23,7 +23,8 @@ struct UserValue{
     float rx;
     float ry;
     float L2;
-    UserValue(){
+    float speedScale;
+    UserValue() : speedScale(0.5f){
         setZero();
     }
     void setZero(){

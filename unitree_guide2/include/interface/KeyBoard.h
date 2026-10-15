@@ -23,13 +23,19 @@ private:
     void* run(void *arg);
     UserCommand checkCmd();
     void changeValue();
+    bool handleEscapeSequence();
+    void adjustSpeed(float delta);
 
     pthread_t _tid;
     int _inputFd = -1;
     bool _threadStarted = false;
     bool _termiosConfigured = false;
+    int _escapeState = 0;
     float sensitivityLeft = 0.05;
     float sensitivityRight = 0.05;
+    float speedStep = 0.1;
+    float minimumSpeedScale = 0.1;
+    float maximumSpeedScale = 1.0;
     struct termios _oldSettings, _newSettings;
     fd_set set;
     int res;

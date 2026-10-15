@@ -143,13 +143,16 @@ void State_Trotting::setHighCmd(double vx, double vy, double wz){
 }
 
 void State_Trotting::getUserCmd(){
+    const double speedScale = saturation(
+        static_cast<double>(_userValue.speedScale), Vec2(0.1, 1.0));
+
     /* Movement */
-    _vCmdBody(0) =  invNormalize(_userValue.ly, _vxLim(0), _vxLim(1));
-    _vCmdBody(1) = -invNormalize(_userValue.lx, _vyLim(0), _vyLim(1));
+    _vCmdBody(0) =  speedScale * invNormalize(_userValue.ly, _vxLim(0), _vxLim(1));
+    _vCmdBody(1) = -speedScale * invNormalize(_userValue.lx, _vyLim(0), _vyLim(1));
     _vCmdBody(2) = 0;
 
     /* Turning */
-    _dYawCmd = -invNormalize(_userValue.rx, _wyawLim(0), _wyawLim(1));
+    _dYawCmd = -speedScale * invNormalize(_userValue.rx, _wyawLim(0), _wyawLim(1));
     _dYawCmd = 0.9*_dYawCmdPast + (1-0.9) * _dYawCmd;
     _dYawCmdPast = _dYawCmd;
 }

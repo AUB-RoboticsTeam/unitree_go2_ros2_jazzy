@@ -33,6 +33,7 @@ private:
     float readAxis(const std::vector<float>& axes, int index, double scale) const;
     bool readButton(const std::vector<int32_t>& buttons, int index) const;
     bool valuesDiffer(const UserValue& lhs, const UserValue& rhs) const;
+    void adjustJoystickSpeed(double delta);
 
     rclcpp::Node::SharedPtr _node;
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joySub;
@@ -52,10 +53,15 @@ private:
     double _scaleLy = 1.0;
     double _scaleRx = 1.0;
     double _scaleRy = 1.0;
+    double _joystickSpeedScale = 0.5;
+    double _speedStep = 0.1;
+    double _minimumSpeedScale = 0.1;
+    double _maximumSpeedScale = 1.0;
     int _axisLx = 0;
     int _axisLy = 1;
     int _axisRx = 3;
     int _axisRy = 4;
+    int _axisSpeed = 7;
     int _buttonA = 0;
     int _buttonB = 1;
     int _buttonX = 2;
@@ -63,6 +69,10 @@ private:
     int _buttonL1 = 4;
     int _buttonL2 = 6;
     int _buttonStart = 7;
+    int _buttonSpeedUp = 12;
+    int _buttonSpeedDown = 14;
+    bool _speedUpPressed = false;
+    bool _speedDownPressed = false;
     bool _requireL2 = false;
 };
 

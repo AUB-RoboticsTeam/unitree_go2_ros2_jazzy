@@ -174,11 +174,12 @@ RViz uses `odom` as its fixed frame. The simulation publishes a dynamic
 
 Start the simulation first, then launch `unitree_guide2` in a second terminal.
 
-### Keyboard
+Choose one of the three input modes below.
+
+### Keyboard only
 
 ```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py \
-  input_mode:=keyboard use_unitree_ble:=false
+ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=keyboard
 ```
 
 | Key | Action | Key | Action |
@@ -187,20 +188,24 @@ ros2 launch unitree_guide2 junior_ctrl.launch.py \
 | `3` | Free stand | `4` | Trotting |
 | `W` / `S` | Forward / backward | `A` / `D` | Lateral motion |
 | `I` / `K` | Pitch input | `J` / `L` | Yaw input |
+| `Arrow Up` | Increase speed | `Arrow Down` | Decrease speed |
 | `Space` | Reset motion input | `0`, `9`, `8` | Balance, swing, and step tests |
 
 > [!CAUTION]
 > Change states deliberately and keep the simulated robot clear of obstacles
 > while testing stand, gait, balance, swing, or step modes.
 
-### Standard joystick
+### Joystick only
 
-Use a wired or Bluetooth joystick that already publishes `sensor_msgs/Joy`:
+Use a joystick that publishes `sensor_msgs/Joy` on `/joy`:
 
 ```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py \
-  input_mode:=joystick use_unitree_ble:=false joy_topic:=/joy
+ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick
 ```
+
+Use D-pad Up to increase speed and D-pad Down to decrease it. The Unitree Go2
+remote uses buttons `12` and `14`; standard joystick D-pad axis `7` is also
+supported. Speed starts at 50% and changes in 10% steps between 10% and 100%.
 
 Confirm the joystick before starting the controller:
 
@@ -209,40 +214,14 @@ ros2 topic hz /joy
 ros2 topic echo /joy --once
 ```
 
-To accept both keyboard and joystick input:
+### Keyboard and joystick
 
 ```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py \
-  input_mode:=both use_unitree_ble:=false joy_topic:=/joy
+ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=both
 ```
 
-### Unitree Go2 BLE remote
-
-The Unitree remote uses a vendor BLE GATT service instead of the normal Linux
-gamepad profile. The included `unitree_ble_joy` node decodes its notifications,
-publishes `sensor_msgs/Joy` on `/joy`, reconnects automatically, and publishes
-neutral controls when packets become stale.
-
-Discover and pair the controller:
-
-```text
-bluetoothctl
-power on
-scan on
-devices
-pair AA:BB:CC:DD:EE:FF
-trust AA:BB:CC:DD:EE:FF
-connect AA:BB:CC:DD:EE:FF
-quit
-```
-
-Then launch the BLE bridge and controller with the discovered address:
-
-```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py \
-  input_mode:=joystick use_unitree_ble:=true \
-  unitree_address:=AA:BB:CC:DD:EE:FF
-```
+Both keyboard arrows and joystick D-pad buttons adjust the same 10%–100% speed
+range. The most recently active input source controls the robot.
 
 ## Main ROS 2 topics
 

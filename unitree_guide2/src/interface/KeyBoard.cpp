@@ -131,6 +131,42 @@ void KeyBoard::changeValue(){
     }
 }
 
+bool KeyBoard::handleEscapeSequence(){
+    if(_escapeState == 0){
+        if(_c == '\x1b'){
+            _escapeState = 1;
+            return true;
+        }
+        return false;
+    }
+
+    if(_escapeState == 1){
+        if(_c == '[' || _c == 'O'){
+            _escapeState = 2;
+            return true;
+        }
+        _escapeState = 0;
+        return true;
+    }
+
+    if(_c == 'A'){
+        adjustSpeed(speedStep);
+    }else if(_c == 'B'){
+        adjustSpeed(-speedStep);
+    }
+    _escapeState = 0;
+    return true;
+}
+
+void KeyBoard::adjustSpeed(float delta){
+    userValue.speedScale = max<float>(
+        minimumSpeedScale,
+        min<float>(userValue.speedScale + delta, maximumSpeedScale));
+    std::cout << "Speed scale: "
+              << static_cast<int>(userValue.speedScale * 100.0f + 0.5f)
+              << "%" << std::endl;
+}
+
 void* KeyBoard::runKeyBoard(void *arg){
     ((KeyBoard*)arg)->run(NULL);
     return NULL;
@@ -146,9 +182,11 @@ void* KeyBoard::run(void *arg){
         if(res > 0){
             ret = read(_inputFd, &_c, 1);
             if(ret == 1){
-                userCmd = checkCmd();
-                if(userCmd == UserCommand::NONE)
-                    changeValue();
+                if(!handleEscapeSequence()){
+                    userCmd = checkCmd();
+                    if(userCmd == UserCommand::NONE)
+                        changeValue();
+                }
                 _c = '\0';
             }
         }else if(res < 0 && errno != EINTR){
