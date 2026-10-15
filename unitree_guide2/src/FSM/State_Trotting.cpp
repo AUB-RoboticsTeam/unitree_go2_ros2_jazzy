@@ -156,7 +156,13 @@ void State_Trotting::getUserCmd(){
     }
 
     /* Turning */
-    _dYawCmd = -invNormalize(_userValue.rx, _wyawLim(0), _wyawLim(1));
+    // Scale the yaw-rate limit with the user-selected planar-speed limit.
+    // For Go2 this ranges from 0.125 rad/s at 0.1 m/s to 1.5 rad/s at 1.2 m/s.
+    const double yawSpeedScale = speedLimit / 1.2;
+    _dYawCmd = -invNormalize(
+        _userValue.rx,
+        _wyawLim(0) * yawSpeedScale,
+        _wyawLim(1) * yawSpeedScale);
     _dYawCmd = 0.9*_dYawCmdPast + (1-0.9) * _dYawCmd;
     _dYawCmdPast = _dYawCmd;
 }
