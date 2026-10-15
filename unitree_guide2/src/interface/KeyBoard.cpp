@@ -159,12 +159,11 @@ bool KeyBoard::handleEscapeSequence(){
 }
 
 void KeyBoard::adjustSpeed(float delta){
-    userValue.speedScale = max<float>(
-        minimumSpeedScale,
-        min<float>(userValue.speedScale + delta, maximumSpeedScale));
-    std::cout << "Speed scale: "
-              << static_cast<int>(userValue.speedScale * 100.0f + 0.5f)
-              << "%" << std::endl;
+    userValue.speedLimit = max<float>(
+        minimumSpeed,
+        min<float>(userValue.speedLimit + delta, maximumSpeed));
+    std::cout << "Maximum linear speed: " << userValue.speedLimit
+              << " m/s" << std::endl;
 }
 
 void* KeyBoard::runKeyBoard(void *arg){

@@ -174,7 +174,7 @@ Go2Robot::Go2Robot(){
                            -0.1420,  0.1420, -0.1420,  0.1420,
                            -0.3200, -0.3200, -0.3200, -0.3200;
 
-    _robVelLimitX << -0.4, 0.4;
+    _robVelLimitX << -1.2, 1.2;
     _robVelLimitY << -0.3, 0.3;
     _robVelLimitYaw << -0.5, 0.5;
 

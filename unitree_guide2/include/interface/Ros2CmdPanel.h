@@ -53,10 +53,10 @@ private:
     double _scaleLy = 1.0;
     double _scaleRx = 1.0;
     double _scaleRy = 1.0;
-    double _joystickSpeedScale = 0.5;
+    double _joystickSpeedLimit = 0.5;
     double _speedStep = 0.1;
-    double _minimumSpeedScale = 0.1;
-    double _maximumSpeedScale = 1.0;
+    double _minimumSpeed = 0.1;
+    double _maximumSpeed = 1.2;
     int _axisLx = 0;
     int _axisLy = 1;
     int _axisRx = 3;

@@ -205,7 +205,8 @@ ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick
 
 Use D-pad Up to increase speed and D-pad Down to decrease it. The Unitree Go2
 remote uses buttons `12` and `14`; standard joystick D-pad axis `7` is also
-supported. Speed starts at 50% and changes in 10% steps between 10% and 100%.
+supported. The maximum linear speed starts at 0.5 m/s and changes in 0.1 m/s
+steps between 0.1 m/s and 1.2 m/s.
 
 Confirm the joystick before starting the controller:
 
@@ -220,8 +221,14 @@ ros2 topic echo /joy --once
 ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=both
 ```
 
-Both keyboard arrows and joystick D-pad buttons adjust the same 10%–100% speed
-range. The most recently active input source controls the robot.
+Both keyboard arrows and joystick D-pad buttons select a maximum linear speed
+from 0.1 m/s to 1.2 m/s. The most recently active input source controls the
+robot.
+
+> [!CAUTION]
+> The selected value is a commanded planar-speed limit, not a guarantee that
+> the simulated robot will remain stable or reach that speed in every world.
+> Increase it gradually and keep the robot clear of obstacles.
 
 ## Main ROS 2 topics
 
