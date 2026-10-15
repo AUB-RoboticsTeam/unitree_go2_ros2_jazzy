@@ -1,0 +1,66 @@
+<launch>
+    <!-- Go2 in Gazebo 11 with the L1 lidar, camera, IMU, foot contacts and RViz.
+         ROS 1 counterpart of `ros2 launch unitree_go2_sim unitree_go2_launch.py`. -->
+    <arg name="world" default="$(find unitree_gazebo)/worlds/elevation.world"/>
+    <arg name="rname" default="go2"/>
+    <arg name="gui" default="true"/>
+    <arg name="rviz" default="true"/>
+    <arg name="world_init_x" default="2.0"/>
+    <arg name="world_init_y" default="2.0"/>
+    <arg name="world_init_z" default="0.5"/>
+    <arg name="world_init_heading" default="0.0"/>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="debug" default="false"/>
+    <!-- Debug mode will hang the robot up in the air. -->
+    <arg name="user_debug" default="false"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="paused" value="true"/>
+        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+        <arg name="headless" value="false"/>
+    </include>
+
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(find go2_description)/xacro/robot.xacro' DEBUG:=$(arg user_debug)"/>
+
+    <node pkg="gazebo_ros" type="spawn_model" name="urdf_spawner" respawn="false" output="screen"
+          args="-urdf -param robot_description -model $(arg rname)_gazebo
+                -x $(arg world_init_x) -y $(arg world_init_y) -z $(arg world_init_z)
+                -Y $(arg world_init_heading) -unpause"/>
+
+    <rosparam file="$(find go2_description)/config/robot_control.yaml" command="load"/>
+
+    <node pkg="controller_manager" type="spawner" name="controller_spawner" respawn="false"
+          output="screen" ns="/$(arg rname)_gazebo" args="joint_state_controller
+          FL_hip_controller FL_thigh_controller FL_calf_controller
+          FR_hip_controller FR_thigh_controller FR_calf_controller
+          RL_hip_controller RL_thigh_controller RL_calf_controller
+          RR_hip_controller RR_thigh_controller RR_calf_controller"/>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"
+          respawn="false" output="screen">
+        <remap from="/joint_states" to="/$(arg rname)_gazebo/joint_states"/>
+    </node>
+
+    <!-- Also expose joint states on /joint_states, as in the ROS 2 package. -->
+    <node pkg="topic_tools" type="relay" name="joint_states_relay"
+          args="/$(arg rname)_gazebo/joint_states /joint_states"/>
+
+    <!-- Drop the robot's own legs from the lidar cloud: /unitree_lidar/points_raw -> /unitree_lidar/points -->
+    <node pkg="unitree_gazebo" type="lidar_self_filter.py" name="lidar_self_filter" output="screen">
+        <remap from="input" to="/unitree_lidar/points_raw"/>
+        <remap from="output" to="/unitree_lidar/points"/>
+    </node>
+
+    <!-- /odom and the dynamic odom -> base transform -->
+    <node pkg="unitree_gazebo" type="odom_tf_publisher.py" name="odom_tf_publisher" output="screen"/>
+
+    <!-- robot_name parameter read by junior_ctrl -->
+    <param name="robot_name" value="$(arg rname)"/>
+
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz"
+          args="-d $(find unitree_gazebo)/rviz/go2.rviz"/>
+</launch>

@@ -1,294 +1,182 @@
 <div align="center">
 
-# Unitree Go2 — ROS 2 Jazzy Simulation
+# Unitree Go2 — ROS Noetic Simulation
 
-**A complete Gazebo Harmonic simulation and control stack for the Unitree Go2.**
+**The Go2 simulation and junior_ctrl control stack for Ubuntu 20.04, ROS Noetic and Gazebo 11.**
 
-[![ROS 2](https://img.shields.io/badge/ROS%202-Jazzy-22314E?logo=ros)](https://docs.ros.org/en/jazzy/)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?logo=ubuntu&logoColor=white)](https://releases.ubuntu.com/noble/)
-[![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic-F58113?logo=gazebo&logoColor=white)](https://gazebosim.org/docs/harmonic/)
-[![Platform](https://img.shields.io/badge/platform-amd64-lightgrey)](#requirements)
-
-Robot description · `ros2_control` · Gazebo worlds · RViz visualization · keyboard, joystick, and BLE control
-
-<img src="docs/images/gazebo-rviz.png" alt="Unitree Go2 running in Gazebo Harmonic with its L1 LiDAR point cloud visualized in RViz" width="100%">
-
-<sub>Gazebo Harmonic simulation and live Unitree L1 point cloud visualization in RViz.</sub>
-
-[Project changes](#project-changes-and-attribution) · [Quick start](#quick-start) · [Control](#control-the-robot) · [Topics](#main-ros-2-topics) · [Troubleshooting](#troubleshooting)
+Robot description · `ros_control` · Gazebo worlds · RViz · Unitree L1 lidar · keyboard, joystick, and BLE control
 
 </div>
 
 ## Overview
 
-This repository provides ROS 2 Jazzy packages for simulating and controlling a
-Unitree Go2 in Gazebo Harmonic. It brings the robot model, controllers, sensor
-bridges, visualization, example worlds, and operator input into one workspace.
+This `noetic` branch is the ROS 1 port of the ROS 2 Jazzy / Gazebo Harmonic
+simulation on `main`. It runs the same Go2 with the Unitree L1 lidar, front
+camera, IMU and foot contact sensing, the same indoor test worlds, and the same
+junior_ctrl state machine driven by the keyboard, a `sensor_msgs/Joy` joystick,
+or the Go2 Bluetooth remote.
 
-### Highlights
-
-- Go2 URDF/Xacro model with `gz_ros2_control`
-- Gazebo Harmonic worlds for flat ground, elevation, city, and custom indoor tests
-- Simulated IMU, RGB camera, Unitree L1 LiDAR, and added contact sensing on all four feet
-- Live robot model, camera, odometry, and point cloud visualization in RViz
-- Dynamic `odom -> base_link` transform published from Gazebo odometry
-- Keyboard, standard `sensor_msgs/Joy`, combined, and Unitree BLE remote input
-- Bundled Unitree low-level messages and per-joint ROS 2 controller
-- Isolated Gazebo transport partition on every launch to avoid stale-session collisions
-
-## Project changes and attribution
-
-This ROS 2 Jazzy repository builds on work from the Unitree open-source
-community, while replacing and extending several parts of the original stack:
-
-- The starting Go2 simulation from
-  [anujjain-dev/unitree-go2-ros2](https://github.com/anujjain-dev/unitree-go2-ros2)
-  used the CHAMP controller. CHAMP was removed from this repository.
-- The active locomotion/controller stack was migrated from
-  [Unitree Robotics' `unitree_ros`](https://github.com/unitreerobotics/unitree_ros),
-  with [Atharva-05/unitree_ros2_sim](https://github.com/Atharva-05/unitree_ros2_sim)
-  used as an additional ROS 2 simulation and migration reference.
-- **Hadi added contact sensors for all four feet**, exposed as ROS 2 contact
-  topics for simulation and control development.
-- **The AUB Robotics Team created the custom indoor simulation world** shown in
-  the screenshots, including walls, furniture, ramps, steps, and obstacles.
-- **Joystick support was added**, including a bundled BLE bridge that lets the
-  physical Unitree Go2 remote connect directly over Bluetooth and publish
-  standard `sensor_msgs/Joy` messages.
-
-These changes provide a controller path based on Unitree's stack without the
-CHAMP dependency, while targeting Ubuntu 24.04, ROS 2 Jazzy, and Gazebo
-Harmonic.
-
-## Screenshots
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/images/gazebo.png" alt="Unitree Go2 in a Gazebo Harmonic indoor simulation world" width="100%"><br>
-      <strong>Gazebo Harmonic</strong><br>
-      Go2 in an indoor world with walls, furniture, ramps, and obstacles.
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/images/rviz.png" alt="Unitree Go2 and its L1 LiDAR point cloud in RViz" width="100%"><br>
-      <strong>RViz</strong><br>
-      Robot state and live L1 LiDAR point cloud on <code>/unitree_lidar/points</code>.
-    </td>
-  </tr>
-</table>
+| Branch | Platform |
+| --- | --- |
+| `main` | Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic |
+| `humble` | ROS 2 Humble |
+| `noetic` | Ubuntu 20.04, ROS Noetic, Gazebo 11 (this branch) |
 
 ## Repository layout
 
 | Package | Purpose |
 | --- | --- |
-| `unitree_go2_description` | Go2 Xacro model, meshes, sensors, and Gazebo worlds |
-| `unitree_go2_sim` | Gazebo/RViz launches, bridges, and controller configuration |
-| `ros2_unitree_legged_msgs` | Unitree low-level command and state messages |
-| `ros2_unitree_legged_controller` | Per-joint `ros2_control` plugin |
-| `unitree_guide2` | Go2 state machine and keyboard, joystick, or BLE input |
+| `go2_description` | Go2 xacro, meshes and sensors (L1 lidar, camera, IMU, foot contacts, odometry) |
+| `unitree_gazebo` | Worlds, `go2_sim.launch`, RViz config, `/odom` publisher, lidar self-filter, foot contact plugins |
+| `unitree_legged_control` | Per-joint `ros_control` controller |
+| `unitree_legged_msgs` | Unitree low-level command and state messages |
+| `unitree_guide` | junior_ctrl state machine and keyboard, joystick or BLE input |
+| `velodyne_gazebo_plugins` | GPU lidar -> `PointCloud2` Gazebo plugin (vendored from DataspeedInc/velodyne_simulator 1.0.13, BSD) |
 
 ## Requirements
 
-- Ubuntu 24.04 (amd64)
-- ROS 2 Jazzy Desktop
-- Gazebo Harmonic packages supplied with ROS 2 Jazzy
-- Bluetooth adapter only when using the Unitree Go2 BLE remote
-
-> [!NOTE]
-> The bundled Unitree joint-control binary is currently built for amd64.
+- Ubuntu 20.04 (amd64)
+- ROS Noetic Desktop-Full (includes Gazebo 11)
+- `ros-noetic-gazebo-ros-control ros-noetic-ros-controllers ros-noetic-joy ros-noetic-topic-tools liblcm-dev`
+- Bluetooth adapter and `bluez` only for the Go2 BLE remote
 
 ## Quick start
 
 ### 1. Clone and install dependencies
 
 ```bash
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/noetic/setup.bash
 
 mkdir -p ~/go2_ws/src
 cd ~/go2_ws/src
-git clone https://github.com/AUB-RoboticsTeam/unitree_go2_ros2_jazzy.git
+git clone -b noetic https://github.com/AUB-RoboticsTeam/unitree_go2_ros2_jazzy.git
 
 cd ~/go2_ws
-sudo rosdep init 2>/dev/null || true
-rosdep update
-rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
+rosdep install --from-paths src --ignore-src -r -y --rosdistro noetic
 ```
-
-`rosdep` installs the declared ROS and system dependencies, including BlueZ,
-LCM, Eigen, ROS-Gazebo, and ROS 2 Control.
 
 ### 2. Build the workspace
 
 ```bash
+conda deactivate 2>/dev/null   # catkin must use the system Python 3.8
 cd ~/go2_ws
-source /opt/ros/jazzy/setup.bash
-colcon build --symlink-install
-source install/setup.bash
+catkin_make -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3
+source devel/setup.bash
 ```
 
-Source `~/go2_ws/install/setup.bash` in every new terminal that uses this
-workspace.
+Source `~/go2_ws/devel/setup.bash` in every new terminal that uses this workspace.
 
 ### 3. Launch Gazebo and RViz
 
 ```bash
-ros2 launch unitree_go2_sim unitree_go2_launch.py
+roslaunch unitree_gazebo go2_sim.launch
 ```
 
-The default launch starts the elevation world, spawns the Go2, loads its joint
-controllers, bridges the simulated sensors to ROS 2, and opens RViz.
+Starts the indoor world (`elevation.world`: rooms, furniture, ramp, steps and
+obstacles), spawns the Go2, loads its joint controllers and opens RViz with the
+L1 point cloud.
 
 ## Simulation options
 
-Run without the Gazebo and RViz windows:
-
 ```bash
-ros2 launch unitree_go2_sim unitree_go2_launch.py gui:=false rviz:=false
+roslaunch unitree_gazebo go2_sim.launch gui:=false rviz:=false          # headless
+roslaunch unitree_gazebo go2_sim.launch world_init_x:=0.0 world_init_y:=0.0 world_init_heading:=1.57
+roslaunch unitree_gazebo go2_sim_TI.launch                               # TI-building world and its start pose
+roslaunch unitree_gazebo go2_sim.launch world:=/path/to/your.world
 ```
 
-Select another included world:
-
-```bash
-ros2 launch unitree_go2_sim unitree_go2_launch.py \
-  world:=$(ros2 pkg prefix unitree_go2_description)/share/unitree_go2_description/worlds/city.sdf
-```
-
-Change the initial robot pose:
-
-```bash
-ros2 launch unitree_go2_sim unitree_go2_launch.py \
-  world_init_x:=0.0 world_init_y:=0.0 world_init_z:=0.5 \
-  world_init_heading:=0.0
-```
-
-Launch the TI-building world with its configured starting pose:
-
-```bash
-ros2 launch unitree_go2_sim unitree_go2_launch_TI.py
-```
-
-RViz uses `odom` as its fixed frame. The simulation publishes a dynamic
-`odom -> base_link` transform, so the robot moves relative to the RViz grid.
+RViz uses `odom` as its fixed frame; the simulation publishes the dynamic
+`odom -> base` transform from Gazebo's ground truth.
 
 ## Control the robot
 
-Start the simulation first, then launch `unitree_guide2` in a second terminal.
-
-Choose one of the three input modes below.
-
-### Keyboard only
+Start the simulation first, then launch junior_ctrl in a second terminal with
+one of the three input modes:
 
 ```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=keyboard
+roslaunch unitree_guide junior_ctrl.launch input_mode:=keyboard
+roslaunch unitree_guide junior_ctrl.launch input_mode:=joystick
+roslaunch unitree_guide junior_ctrl.launch input_mode:=both
 ```
+
+In `joystick` and `both` modes the launch starts the Go2 BLE remote bridge
+(`unitree_address:=98:DA:10:02:9C:4C` by default, `use_unitree_ble:=false` to
+disable it). For a USB or Bluetooth gamepad use
+`use_unitree_ble:=false use_joy_node:=true joy_dev:=/dev/input/js0`. In `both`
+mode the most recently used input controls the robot.
 
 | Key | Action | Key | Action |
 | --- | --- | --- | --- |
 | `1` | Passive | `2` | Fixed stand |
 | `3` | Free stand | `4` | Trotting |
+| `5` | move_base (walk from `/cmd_vel`) | `0`, `9`, `8` | Balance, swing and step tests |
 | `W` / `S` | Forward / backward | `A` / `D` | Lateral motion |
 | `I` / `K` | Pitch input | `J` / `L` | Yaw input |
 | `Arrow Up` | Increase speed | `Arrow Down` | Decrease speed |
-| `Space` | Reset motion input | `0`, `9`, `8` | Balance, swing, and step tests |
+| `Space` | Reset motion input | | |
+
+Joystick: `B` passive, `A` fixed stand, `X` free stand, `Start` trotting, `Y`
+move_base, `L1` + `X`/`A`/`Y` balance/swing/step tests, left stick to move,
+right stick to turn, D-pad up/down for speed. The Go2 remote uses buttons `12`
+and `14` for the D-pad; a standard joystick's D-pad axis `7` also works. The
+maximum linear speed starts at 0.5 m/s and changes in 0.1 m/s steps between
+0.1 and 1.2 m/s; the yaw-rate limit scales with it up to 4.5 rad/s.
 
 > [!CAUTION]
 > Change states deliberately and keep the simulated robot clear of obstacles
-> while testing stand, gait, balance, swing, or step modes.
+> while testing stand, gait, balance, swing or step modes.
 
-### Joystick only
-
-Use a joystick that publishes `sensor_msgs/Joy` on `/joy`:
-
-```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=joystick
-```
-
-Use D-pad Up to increase speed and D-pad Down to decrease it. The Unitree Go2
-remote uses buttons `12` and `14`; standard joystick D-pad axis `7` is also
-supported. The maximum linear speed starts at 0.5 m/s and changes in 0.1 m/s
-steps between 0.1 m/s and 1.2 m/s. The yaw-rate limit changes with the same
-setting, reaching 4.5 rad/s at the maximum speed setting.
-
-Confirm the joystick before starting the controller:
-
-```bash
-ros2 topic hz /joy
-ros2 topic echo /joy --once
-```
-
-### Keyboard and joystick
-
-```bash
-ros2 launch unitree_guide2 junior_ctrl.launch.py input_mode:=both
-```
-
-Both keyboard arrows and joystick D-pad buttons select a maximum linear speed
-from 0.1 m/s to 1.2 m/s. The yaw-rate limit scales proportionally from
-0.375 rad/s to 4.5 rad/s. The most recently active input source controls the
-robot.
-
-> [!CAUTION]
-> The selected value is a commanded planar-speed limit, not a guarantee that
-> the simulated robot will remain stable or reach that speed in every world.
-> Increase it gradually and keep the robot clear of obstacles.
-
-## Main ROS 2 topics
+## Main topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/odom` | `nav_msgs/msg/Odometry` | Gazebo 3D odometry |
-| `/tf` | `tf2_msgs/msg/TFMessage` | `odom -> base_link` and robot transforms |
-| `/imu/data` | `sensor_msgs/msg/Imu` | Simulated IMU |
-| `/rgb_image` | `sensor_msgs/msg/Image` | Front RGB camera |
-| `/unitree_lidar/points` | `sensor_msgs/msg/PointCloud2` | Unitree L1 point cloud |
-| `/feet/FR/contacts` | `ros_gz_interfaces/msg/Contacts` | Front-right foot contact data |
-| `/feet/FL/contacts` | `ros_gz_interfaces/msg/Contacts` | Front-left foot contact data |
-| `/feet/RR/contacts` | `ros_gz_interfaces/msg/Contacts` | Rear-right foot contact data |
-| `/feet/RL/contacts` | `ros_gz_interfaces/msg/Contacts` | Rear-left foot contact data |
-| `/joy` | `sensor_msgs/msg/Joy` | Joystick or Unitree BLE remote input |
+| `/unitree_lidar/points` | `sensor_msgs/PointCloud2` | Unitree L1 point cloud (frame `lidar_l1_link`) |
+| `/unitree_lidar/points_raw` | `sensor_msgs/PointCloud2` | Same cloud before the robot's own legs are removed |
+| `/odom` | `nav_msgs/Odometry` | Gazebo odometry |
+| `/tf` | `tf2_msgs/TFMessage` | `odom -> base` and robot transforms |
+| `/imu/data` | `sensor_msgs/Imu` | 100 Hz simulated IMU |
+| `/trunk_imu` | `sensor_msgs/Imu` | 1 kHz IMU used by junior_ctrl |
+| `/rgb_image` | `sensor_msgs/Image` | Front RGB camera |
+| `/feet/{FR,FL,RR,RL}/contacts` | `gazebo_msgs/ContactsState` | Foot contacts |
+| `/joint_states` | `sensor_msgs/JointState` | Joint states |
+| `/joy` | `sensor_msgs/Joy` | Joystick or Unitree BLE remote input |
+| `/cmd_vel` | `geometry_msgs/Twist` | Velocity command in the move_base state |
+| `/estimator/odom` | `nav_msgs/Odometry` | junior_ctrl's own state estimate |
+
+## Differences from the ROS 2 version
+
+- Gazebo 11 uses ODE at a 0.2 ms step (Unitree's tuned settings) instead of Harmonic's physics.
+- The robot's root frame is `base` (Unitree's naming) instead of `base_link`.
+- The L1 lidar is a GPU ray sensor with the same mount and 600 x 30 scan pattern.
+  Gazebo 11 renders the robot's own body, so `lidar_self_filter.py` removes points
+  inside the body box (`box_min` / `box_max` parameters).
+- Foot contacts use `gazebo_msgs/ContactsState`.
 
 ## Troubleshooting
 
-### A fresh launch fails or the robot does not spawn
+### A launch hangs or the robot does not spawn
 
-Clean up processes left by an interrupted Gazebo session, then launch again:
-
-```bash
-$(ros2 pkg prefix unitree_go2_sim)/lib/unitree_go2_sim/clean_sim.sh
-```
-
-### RViz does not follow the robot
-
-Verify the odometry transform:
+A previous `gzserver` is still running. Clean up and launch again:
 
 ```bash
-ros2 run tf2_ros tf2_echo odom base_link
+rosrun unitree_gazebo clean_sim.sh
 ```
 
-### The point cloud is missing
+### The robot will not stand and prints `[SAFETY TRIP]`
 
-Confirm that the Gazebo bridge is publishing the L1 stream:
+It has fallen over; restart the simulation.
 
-```bash
-ros2 topic hz /unitree_lidar/points
-ros2 topic echo /unitree_lidar/points --once
-```
+### The build picks up the wrong Python
 
-### A dependency is missing
-
-```bash
-cd ~/go2_ws
-rosdep check --from-paths src --ignore-src --rosdistro jazzy
-```
+Deactivate conda and rebuild with `-DPYTHON_EXECUTABLE=/usr/bin/python3`.
 
 ## Acknowledgements
 
-- [Unitree Robotics — `unitree_ros`](https://github.com/unitreerobotics/unitree_ros): source of the migrated Unitree locomotion/controller stack
-- [Atharva-05 — `unitree_ros2_sim`](https://github.com/Atharva-05/unitree_ros2_sim): ROS 2 simulation and controller-migration reference
-- [anujjain-dev — `unitree-go2-ros2`](https://github.com/anujjain-dev/unitree-go2-ros2): original CHAMP-based Go2 simulation foundation
-- **Hadi and the AUB Robotics Team**: ROS 2 Jazzy/Gazebo Harmonic migration, CHAMP removal, four-foot contact sensing, custom world, and joystick/BLE integration
+- [Unitree Robotics — `unitree_ros`](https://github.com/unitreerobotics/unitree_ros) and [`unitree_guide`](https://github.com/unitreerobotics/unitree_guide): robot description, joint controller and junior_ctrl
+- [DataspeedInc — `velodyne_simulator`](https://bitbucket.org/DataspeedInc/velodyne_simulator): Gazebo lidar plugin
+- **Hadi and the AUB Robotics Team**: the ROS 2 Jazzy simulation this branch is ported from, foot contact sensing, the custom worlds and joystick/BLE integration
 
 ## License
 
-Individual bundled components retain the licenses declared in their package
-manifests and source files. A repository-wide license has not yet been declared.
+Each package keeps its own license (`LICENSE` files and package manifests); the
+Unitree-derived packages are BSD 3-Clause.

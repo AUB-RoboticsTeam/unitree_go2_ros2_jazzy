@@ -1,0 +1,35 @@
+<launch>
+    <!-- junior_ctrl for the simulated Go2. Start go2_sim.launch first.
+         ROS 1 counterpart of `ros2 launch unitree_guide2 junior_ctrl.launch.py`.
+
+         input_mode:=keyboard | joystick | both
+         joystick input is any sensor_msgs/Joy on joy_topic: the Unitree Go2 BLE
+         remote (use_unitree_ble, default) or a gamepad via joy_node (use_joy_node). -->
+    <arg name="input_mode" default="joystick"/>
+    <arg name="joy_topic" default="/joy"/>
+    <arg name="unitree_address" default="98:DA:10:02:9C:4C"/>
+    <arg name="use_unitree_ble" default="true"/>
+    <arg name="use_joy_node" default="false"/>
+    <arg name="joy_dev" default="/dev/input/js0"/>
+
+    <arg name="joystick_input" value="$(eval arg('input_mode') != 'keyboard')"/>
+
+    <node if="$(eval str(arg('use_unitree_ble')).lower() == 'true' and arg('joystick_input'))"
+          pkg="unitree_guide" type="unitree_ble_joy.py" name="unitree_ble_joy" output="screen">
+        <param name="address" value="$(arg unitree_address)"/>
+        <param name="joy_topic" value="$(arg joy_topic)"/>
+    </node>
+
+    <node if="$(eval str(arg('use_joy_node')).lower() == 'true' and arg('joystick_input'))"
+          pkg="joy" type="joy_node" name="joy_node" output="screen">
+        <param name="dev" value="$(arg joy_dev)"/>
+        <param name="deadzone" value="0.05"/>
+        <param name="autorepeat_rate" value="20"/>
+        <remap from="joy" to="$(arg joy_topic)"/>
+    </node>
+
+    <node pkg="unitree_guide" type="junior_ctrl" name="unitree_gazebo_server" output="screen">
+        <param name="input_mode" value="$(arg input_mode)"/>
+        <param name="joy/topic" value="$(arg joy_topic)"/>
+    </node>
+</launch>

@@ -1,0 +1,16 @@
+<launch>
+    <!-- Go2 in the TI-building world with its configured starting pose.
+         ROS 1 counterpart of `ros2 launch unitree_go2_sim unitree_go2_launch_TI.py`. -->
+    <arg name="gui" default="true"/>
+    <arg name="rviz" default="true"/>
+
+    <include file="$(find unitree_gazebo)/launch/go2_sim.launch">
+        <arg name="world" value="$(find unitree_gazebo)/worlds/TIbuilding.world"/>
+        <arg name="world_init_x" value="0.0"/>
+        <arg name="world_init_y" value="0.0"/>
+        <arg name="world_init_z" value="4.375"/>
+        <arg name="world_init_heading" value="0.0"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="rviz" value="$(arg rviz)"/>
+    </include>
+</launch>
