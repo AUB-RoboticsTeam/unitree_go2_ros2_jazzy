@@ -6,6 +6,15 @@
 
 Robot description · `ros_control` · Gazebo worlds · RViz · Unitree L1 lidar · keyboard, joystick, and BLE control
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/gazebo.png" alt="Unitree Go2 standing in the indoor world in Gazebo 11"></td>
+    <td width="50%"><img src="docs/images/rviz.png" alt="Unitree L1 lidar point cloud around the Go2 in RViz"></td>
+  </tr>
+</table>
+
+<sub>Gazebo 11 simulation and live Unitree L1 point cloud visualization in RViz.</sub>
+
 </div>
 
 ## Overview
@@ -58,7 +67,6 @@ rosdep install --from-paths src --ignore-src -r -y --rosdistro noetic
 ### 2. Build the workspace
 
 ```bash
-conda deactivate 2>/dev/null   # catkin must use the system Python 3.8
 cd ~/go2_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3
 source devel/setup.bash
@@ -166,9 +174,7 @@ rosrun unitree_gazebo clean_sim.sh
 
 It has fallen over; restart the simulation.
 
-### The build picks up the wrong Python
 
-Deactivate conda and rebuild with `-DPYTHON_EXECUTABLE=/usr/bin/python3`.
 
 ## Acknowledgements
 
